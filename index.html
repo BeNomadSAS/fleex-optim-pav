@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex,nofollow">
+    <title>Fleex Optim PAV — Planification des tournées de collecte</title>
+
+    <link rel="icon" type="image/png" href="./bemap-js-api/favicon.png?v=0.3.0-31a6536-dev1789389926549">
+    <link rel="shortcut icon" href="./bemap-js-api/favicon.ico?v=0.3.0-31a6536-dev1789389926549">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="./bemap-js-api/maplibre-gl.css?v=0.3.0-31a6536-dev1789389926549" />
+    <link rel="stylesheet" href="./bemap-js-api/bemap-js-api.css?v=0.3.0-31a6536-dev1789389926549" />
+
+    <script src="./boot.js?v=0.3.0-31a6536-dev1789389926549"></script>
+  <script type="module" crossorigin src="./assets/main-B36kWMI8.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/main--TXOmB4p.css">
+</head>
+<body>
+    <div class="app" id="app">
+
+        <div class="map-container"><div id="map"></div></div>
+
+        <!-- ==================== LEFT PANEL — inputs ==================== -->
+        <aside class="panel panel-left" data-collapsed="false">
+            <div class="panel-head panel-head-left">
+                <img class="brand-logo" src="https://benomad.com/assets/benomad-logo.svg" alt="BeNomad">
+                <div class="brand"><span data-i18n="app.brand">Fleex Optim PAV</span><small data-i18n="app.subtitle">Tournées de collecte</small></div>
+                <div class="head-spacer"></div>
+                <span id="status-bar" class="head-status loading" role="status" aria-live="polite"><span class="dot"></span><span class="text" data-i18n="solve.health.checking">Vérification…</span></span>
+                <div class="lang-select" id="lang-select">
+                    <button type="button" class="lang-btn" id="lang-btn" aria-haspopup="menu" aria-expanded="false" data-i18n-title="lang.title" data-i18n-aria-label="lang.title" title="Langue" aria-label="Langue">
+                        <span class="lang-cur" id="lang-cur" aria-hidden="true">🇫🇷</span>
+                        <span class="lang-caret" aria-hidden="true">▾</span>
+                    </button>
+                    <div class="lang-menu" id="lang-menu" role="menu"></div>
+                </div>
+                <button class="theme-toggle" id="docs-btn" type="button" data-i18n-title="docs.open" data-i18n-aria-label="docs.open" title="Documentation">📖</button>
+                <button class="theme-toggle" id="theme-toggle" type="button" data-i18n-title="theme.title" title="Thème">🌙</button>
+                <button class="collapse-btn" data-collapse-target="left" data-i18n-aria-label="panel.collapse" aria-label="Replier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+            </div>
+
+            <div class="panel-body">
+
+                <!-- Guide -->
+                <div class="guide" id="guide">
+                    <button class="guide-close" id="guide-close" type="button" data-i18n-aria-label="guide.close" aria-label="Fermer" title="Ne plus afficher">×</button>
+                    <div class="guide-t" data-i18n="guide.title">Guide</div>
+                    <ol class="steps" id="guide-steps">
+                        <li data-step="login"  data-i18n="guide.step.login">Connexion Bemap</li>
+                        <li data-step="depot"  data-i18n="guide.step.depot">Départ / retour</li>
+                        <li data-step="fleet"  data-i18n="guide.step.fleet">Configurer la flotte</li>
+                        <li data-step="vidage" data-i18n="guide.step.vidage">Dépôts de vidage</li>
+                        <li data-step="bornes" data-i18n="guide.step.bornes">Sélection des bornes</li>
+                        <li data-step="solve"  data-i18n="guide.step.solve">Lancer l'optimisation</li>
+                    </ol>
+                </div>
+
+                <!-- Clear all — top action; shown once there is data. -->
+                <button class="btn btn-red" id="clear-all-btn" style="display:none;width:100%" data-i18n="clearAll">Tout effacer</button>
+
+                <!-- Bemap config — collapsible -->
+                <div class="advanced-section">
+                    <button class="advanced-toggle" data-toggle="bemap">
+                        <span class="advanced-arrow" data-arrow="bemap">▶</span>
+                        <span data-i18n="config.title">Configuration Bemap</span>
+                        <span class="head-spacer"></span>
+                        <span class="mono" style="font-size:10.5px;text-transform:none;letter-spacing:0;color:var(--muted);font-weight:600"><b id="cfg-env" style="color:var(--ink-dim)">—</b><span style="margin:0 3px">·</span><b id="cfg-user" style="color:var(--ink-dim)">—</b></span>
+                    </button>
+                    <div class="advanced-content" data-content="bemap" style="display:none">
+                        <div class="card" style="padding:10px 13px">
+                            <div class="mono" style="font-size:11.5px;color:var(--ink-dim);margin-bottom:8px"><span data-i18n="config.summary.env">Env</span> : <b id="cfg-env-full" style="color:var(--ink)">—</b><br><span data-i18n="config.summary.user">Utilisateur</span> : <b id="cfg-user-full" style="color:var(--ink)">—</b></div>
+                            <button class="btn btn-sm" id="btn-modify-creds" style="width:100%" data-i18n="config.modify">Modifier</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Paramètres (GLOBAL service times) — collapsed, above Import (params are global). -->
+                <div class="advanced-section">
+                    <button class="advanced-toggle" data-toggle="settings">
+                        <span class="advanced-arrow" data-arrow="settings">▶</span>
+                        <span data-i18n="params.title">Paramètres (global)</span>
+                    </button>
+                    <div class="advanced-content" data-content="settings" style="display:none">
+                        <div class="card">
+                            <div class="field"><label for="st-bav" data-i18n="fleet.serviceBav">Temps de collecte / borne (s)</label><input type="number" id="st-bav" class="inp" min="0" value="120"></div>
+                            <div class="field" style="margin-top:8px"><label for="st-dump" data-i18n="fleet.serviceDump">Temps de vidage (s)</label><input type="number" id="st-dump" class="inp" min="0" value="600"></div>
+                            <div class="field" style="margin-top:8px"><label for="st-depot" data-i18n="fleet.serviceDepot">Temps au départ / retour (s)</label><input type="number" id="st-depot" class="inp" min="0" value="0"></div>
+                            <div class="field" style="margin-top:8px"><label for="balance-mode" data-i18n="fleet.balance">Équilibrage</label><select id="balance-mode" class="inp" disabled><option data-i18n="fleet.balanceTime">Par temps (défaut)</option></select></div>
+                            <div class="hint" data-i18n="fleet.balanceHint">Le solveur équilibre par le temps (V2 : par poids / nombre de PAV).</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Import — collapsed (fleex pattern): all file imports + full demo + JSON paste -->
+                <div class="advanced-section gated" id="import-section" style="display:none">
+                    <button class="advanced-toggle" data-toggle="import">
+                        <span class="advanced-arrow" data-arrow="import">▶</span>
+                        <span data-i18n="import.title">Import des données</span>
+                    </button>
+                    <div class="advanced-content" data-content="import" style="display:none">
+                        <div class="card">
+                            <div class="import-grid">
+                                <button class="btn" id="import-bavs-btn" data-i18n="import.fileBavs">Bornes</button>
+                                <button class="btn" id="import-depots-btn" data-i18n="import.fileDepot">Départ / retour</button>
+                                <button class="btn" id="import-dumps-btn" data-i18n="import.fileDumps">Dépôts de vidage</button>
+                                <button class="btn" id="import-vehicles-btn" data-i18n="import.fileVehicles">Véhicules</button>
+                            </div>
+                            <button class="btn btn-cyan" id="load-sample-btn" style="width:100%;margin-top:8px" data-i18n="import.sample">Exemple Nice (démo complète)</button>
+                            <div style="display:flex;gap:6px;margin-top:6px">
+                                <a class="btn btn-ghost" href="/data/example-pav.csv" download style="flex:1;text-decoration:none" data-i18n="import.csvExample">CSV exemple</a>
+                                <button class="btn btn-ghost" id="json-example-btn" style="flex:1" data-i18n="import.jsonExample">JSON exemple</button>
+                            </div>
+                            <button class="btn btn-violet btn-sm" id="json-file-btn" style="width:100%;margin-top:8px" data-i18n="import.jsonFile">⬆ Importer un JSON (fichier)</button>
+                            <input type="file" id="json-file-input" accept=".json,.geojson,application/json" hidden>
+                            <div class="advanced-section" style="margin-top:8px">
+                                <button class="advanced-toggle" data-toggle="json"><span class="advanced-arrow" data-arrow="json">▶</span><span data-i18n="import.jsonImport">Import JSON (coller)</span></button>
+                                <div class="advanced-content" data-content="json" style="display:none">
+                                    <textarea id="json-input" class="inp" rows="4" data-i18n-placeholder="import.jsonPlaceholder" style="font-family:var(--font-mono);font-size:11px"></textarea>
+                                    <button class="btn btn-violet btn-sm" id="json-import-btn" style="width:100%;margin-top:6px" data-i18n="import.import">Importer le JSON</button>
+                                </div>
+                            </div>
+                            <div id="import-status" class="hint" aria-live="polite"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 1. Départ / Retour (single point — start == return) -->
+                <div class="card gated" id="depot-section" style="display:none">
+                    <div class="card-title"><span class="step-no">1</span><span data-i18n="depot.startReturn">Point de départ / retour</span></div>
+                    <button class="btn btn-map" id="depot-pick-btn" style="width:100%" data-i18n="depot.place">Placer sur la carte</button>
+                    <div style="display:flex;gap:6px;align-items:center;margin-top:6px">
+                        <div id="depot-status" class="hint" style="flex:1" aria-live="polite"></div>
+                        <button class="iconbtn danger" id="depot-clear-btn" style="display:none" data-i18n-title="depot.clear" data-i18n-aria-label="depot.clear" title="Effacer" aria-label="Effacer">×</button>
+                    </div>
+                </div>
+
+                <!-- 2. Flotte -->
+                <div class="card gated" id="fleet-section" style="display:none">
+                    <div class="card-title"><span class="step-no">2</span><span data-i18n="fleet.title">Flotte</span></div>
+                    <div id="fleet-list"></div>
+                    <button class="btn btn-cyan" id="add-vehicle-btn" style="width:100%;margin-top:8px" data-i18n="fleet.add">+ Ajouter un véhicule</button>
+                </div>
+
+                <!-- 3. Vidage (numbered markers, linked to the list) -->
+                <div class="card gated" id="dumps-section" style="display:none">
+                    <div class="card-title"><span class="step-no">3</span><span data-i18n="dump.title">Dépôts de vidage</span><span class="spacer"></span><span class="count">(<span id="dump-count">0</span>)</span></div>
+                    <div id="dump-list"></div>
+                    <button class="btn btn-map dump" id="dump-pick-btn" style="width:100%;margin-top:8px" data-i18n="dump.add">+ Ajouter sur la carte</button>
+                    <div id="dump-status" class="hint" aria-live="polite"></div>
+                </div>
+
+                <!-- 4. Bornes (PAV) — imported / placed LAST, once everything is configured -->
+                <div class="card gated" id="pav-section" style="display:none">
+                    <div class="card-title"><span class="step-no">4</span><span data-i18n="pav.title">Bornes (PAV)</span><span class="spacer"></span><span class="count">(<span id="pav-count">0</span>)</span></div>
+                    <div id="pav-filter" class="flux-filter"></div>
+                    <div id="pav-list"></div>
+                    <button class="btn btn-map" id="pav-add-btn" style="width:100%;margin-top:8px" data-i18n="pav.add">+ Ajouter sur la carte</button>
+                    <div id="pav-add-status" class="hint" aria-live="polite"></div>
+                </div>
+
+                <!-- 5. Optimisation (hero) -->
+                <div id="solve-section" class="gated" style="display:none">
+                    <div id="solve-validation" class="validation-panel" style="display:none" role="alert" aria-live="assertive"></div>
+                    <div id="solve-hint" class="solve-hint" aria-live="polite"></div>
+                    <button id="solve-btn" class="btn-solve" disabled><span id="solve-btn-text" data-i18n="solve.btn.run">Lancer l'optimisation</span></button>
+                    <button id="cancel-btn" class="btn btn-red" style="display:none;width:100%;margin-top:6px" data-i18n="solve.btn.cancel">Annuler</button>
+                    <button id="download-data-btn" class="btn-download" disabled data-i18n="solve.download">⬇ Télécharger les données (JSON)</button>
+                    <div id="solve-status" class="hint" aria-live="polite"></div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ==================== RIGHT PANEL — results ==================== -->
+        <aside class="panel panel-right" data-collapsed="true">
+            <div class="panel-head">
+                <button class="collapse-btn" data-collapse-target="right" data-i18n-aria-label="panel.expand" aria-label="Déplier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+                <div class="results-title-group"><span class="results-title" data-i18n="results.title">Résultats</span><small data-i18n="results.subtitle">Tournées optimisées</small></div>
+                <div class="head-spacer"></div>
+                <div class="head-actions">
+                    <button class="btn btn-sm" id="btn-show-all" data-i18n="results.showAll">Tout afficher</button>
+                    <button class="btn btn-sm" id="btn-hide-all" data-i18n="results.hideAll">Tout masquer</button>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="empty" id="results-empty"><div class="big">🗺️</div><div data-i18n="results.empty">Lancez une optimisation pour voir les tournées.</div></div>
+                <div id="results-content" style="display:none"></div>
+            </div>
+        </aside>
+
+        <!-- Legend (bottom-left, ≥1320px) -->
+        <div class="legend">
+            <div class="row"><span style="width:9px;height:9px;border-radius:50%;background:var(--depot);display:inline-block"></span> <span data-i18n="legend.depot">Départ / retour</span></div>
+            <div class="row"><span class="legend-dots" id="legend-flux-dots"></span> <span data-i18n="legend.bav">Borne (PAV)</span></div>
+            <div class="row"><span style="width:9px;height:9px;border-radius:2px;background:var(--dump);display:inline-block"></span> <span data-i18n="legend.dump">Dépôt de vidage</span></div>
+        </div>
+
+        <!-- Loader -->
+        <div class="loader" id="loader" role="status" aria-live="polite" aria-hidden="true">
+            <div class="loader-card">
+                <div class="ring"></div>
+                <div class="msg" data-i18n="solve.phase.matrix">Préparation des matrices…</div>
+                <div class="ph">1 / 3</div>
+                <div class="bar"><i style="width:33%"></i></div>
+            </div>
+        </div>
+
+        <!-- Toast host -->
+        <div class="toast-host" id="toast-host"></div>
+
+        <!-- Hidden shared file input -->
+        <input type="file" id="import-file-input" accept=".csv,.json,.geojson,text/csv,application/json" hidden>
+
+        <!-- Confirm dialog (styled — replaces window.confirm) -->
+        <div class="modal off" id="confirm-modal" role="dialog" aria-modal="true" aria-hidden="true">
+            <div class="modal-card">
+                <div class="modal-top"><b data-i18n="confirm.title">Confirmer</b></div>
+                <div class="modal-body">
+                    <div id="confirm-msg" style="font-size:13px;color:var(--ink);line-height:1.45"></div>
+                    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:6px">
+                        <button class="btn" id="confirm-no" style="width:auto;padding:9px 16px" data-i18n="confirm.cancel">Annuler</button>
+                        <button class="btn btn-red" id="confirm-yes" style="width:auto;padding:9px 16px" data-i18n="confirm.ok">Confirmer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Login modal -->
+        <div class="modal off" id="login-modal" role="dialog" aria-modal="true" aria-hidden="true">
+            <div class="modal-card">
+                <div class="modal-top brand-top">
+                    <div class="modal-logo"><img src="https://benomad.com/assets/benomad-logo.svg" alt="BeNomad" width="150" height="26"></div>
+                    <h2 class="product-name" data-i18n="app.brand">Fleex Optim PAV</h2>
+                    <div class="product-tagline" data-i18n="app.subtitle">Tournées de collecte</div>
+                    <h3 data-i18n="config.title">Configuration Bemap</h3>
+                    <p class="subtitle" data-i18n="config.modal.subtitle">Sélectionnez l'environnement et saisissez vos identifiants.</p>
+                </div>
+                <form class="modal-body" id="login-form">
+                    <div class="field"><label for="login-env" data-i18n="config.field.env">Environnement</label><select id="login-env" class="inp" required></select></div>
+                    <div class="field"><label for="login-user" data-i18n="config.field.user">Utilisateur</label><input id="login-user" class="inp" type="text" placeholder="username" autocomplete="username" required></div>
+                    <div class="field"><label for="login-pwd" data-i18n="config.field.pass">Mot de passe</label><input id="login-pwd" class="inp" type="password" placeholder="password" autocomplete="current-password" required></div>
+                    <label class="chk"><input type="checkbox" id="login-remember"> <span data-i18n="config.field.remember">Se souvenir sur ce poste</span></label>
+                    <div class="err" id="login-err"></div>
+                    <button class="btn-solve" id="btn-login-submit" type="submit" data-i18n="config.btn.save">Se connecter</button>
+                    <div class="hint" data-i18n="config.hint">Identifiants base64-obfusqués au repos (non chiffrés) ; transmis en Basic Auth via HTTPS.</div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Documentation modal (in-app viewer + download) -->
+        <div class="modal off" id="docs-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="docs-modal-title">
+            <div class="modal-card doc-modal">
+                <div class="modal-top doc-top">
+                    <b id="docs-modal-title" data-i18n="docs.title">Documentation</b>
+                    <button class="doc-x" id="docs-close" type="button" data-i18n-aria-label="docs.close" aria-label="Fermer">×</button>
+                </div>
+                <div class="doc-toolbar">
+                    <div class="doc-tabs" role="tablist">
+                        <button class="doc-tab on" data-doc="guide" role="tab" aria-selected="true" data-i18n="docs.tab.guide">Guide utilisateur</button>
+                        <button class="doc-tab" data-doc="api" role="tab" aria-selected="false" data-i18n="docs.tab.api">Référence API</button>
+                    </div>
+                    <div class="doc-lang">
+                        <button class="doc-l on" data-doclang="en" data-i18n="docs.lang.en">EN</button>
+                        <button class="doc-l" data-doclang="fr" data-i18n="docs.lang.fr">FR</button>
+                    </div>
+                </div>
+                <div class="doc-render" id="docs-render" tabindex="0" aria-live="polite"></div>
+                <div class="doc-foot">
+                    <a class="btn" id="docs-download" href="#" download data-i18n="docs.download">Télécharger (.md)</a>
+                    <button class="btn" id="docs-close-2" type="button" data-i18n="docs.close">Fermer</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="./jquery/jquery.min.js?v=0.3.0-31a6536-dev1789389926549"></script>
+    <script src="./bemap-js-api/maplibre-gl.js?v=0.3.0-31a6536-dev1789389926549"></script>
+    <script src="./bemap-js-api/pmtiles.js?v=0.3.0-31a6536-dev1789389926549"></script>
+    <script src="./bemap-js-api/bemap-js-api.js?v=0.3.0-31a6536-dev1789389926549"></script>
+</body>
+</html>
